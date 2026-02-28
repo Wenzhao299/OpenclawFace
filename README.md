@@ -145,57 +145,52 @@ npm i
 4. `includeMessageContent` 默认 `false`，不建议面板场景开启。
 5. `includeToolParams` 默认 `false`，避免泄露工具参数与结果。
 
-## openclaw.json 插件完整配置参考
+## openclaw.json 插件配置参考
 
-把下面片段合并到你的 `~/.openclaw/openclaw.json`：
+把下面片段合并到你的 `~/.openclaw/openclaw.json`，其中`events.allow`和`fields`视需要增加或删除，`weather.lat/lon`设置为天气位置。
 
 ```json
 {
-  "plugins": {
+ "plugins": {
     "load": {
       "paths": [
-        "/your-path/.openclaw/workspace/OpenclawFace"
+        "~/.openclaw/workspace/OpenclawFace"
       ]
     },
     "entries": {
+      "discord": {
+        "enabled": true
+      },
       "OpenclawFace": {
         "enabled": true,
         "config": {
-          "bind": "0.0.0.0",
+          "bind": "127.0.0.1",
+          "token": "replace-with-your-token",
           "port": 8787,
           "path": "/ws",
-          "token": "replace-with-your-token",
-          "ui": {
-            "enabled": true,
-            "path": "/face",
-            "defaultToUi": true
-          },
           "events": {
             "allow": [
               "message_received",
-              "message_sending",
-              "message_sent",
               "llm_input",
               "llm_output",
               "before_tool_call",
               "after_tool_call",
-              "before_agent_start",
-              "agent_end",
-              "session_start",
-              "session_end",
-              "subagent_spawning",
-              "subagent_spawned",
-              "subagent_ended",
-              "gateway_start",
-              "gateway_stop",
+              "message_sent",
+              "weather_update",
               "ui_interaction",
               "action_play",
-              "thought",
-              "weather_update",
-              "weather_error"
+              "thought"
             ]
           },
           "fields": {
+            "gateway": [
+              "kind",
+              "tempC",
+              "time",
+              "tz",
+              "code",
+              "cloudCover"
+            ],
             "ctx": [
               "sessionKey"
             ],
@@ -218,20 +213,8 @@ npm i
               "toolName",
               "durationMs",
               "error"
-            ],
-            "agent": [],
-            "gateway": [
-              "kind",
-              "tempC",
-              "time",
-              "tz",
-              "code",
-              "cloudCover"
-            ],
-            "session": []
+            ]
           },
-          "includeMessageContent": false,
-          "includeToolParams": false,
           "weather": {
             "enabled": true,
             "lat": 31.2304,
@@ -240,11 +223,9 @@ npm i
           },
           "nomi": {
             "autoTouchReact": true,
-            "thought": {
-              "listening": "I'm listening.",
-              "thinking": "Let me think..."
-            }
-          }
+          },
+          "includeMessageContent": false,
+          "includeToolParams": false
         }
       }
     }
