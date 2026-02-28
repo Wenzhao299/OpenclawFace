@@ -1,0 +1,11 @@
+{
+  "name": "OpenclawFace",
+  "version": "1.0.0",
+  "description": "OpenClaw all-in-one face plugin with built-in web UI and bidirectional WebSocket bridge.",
+  "main": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

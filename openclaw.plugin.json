@@ -1,0 +1,166 @@
+{
+  "id": "OpenclawFace",
+  "name": "OpenClaw Face",
+  "description": "All-in-one OpenClaw face plugin: bidirectional WS + built-in web UI.",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": { "type": "boolean", "default": true },
+      "bind": { "type": "string", "default": "127.0.0.1" },
+      "port": { "type": "integer", "default": 8787, "minimum": 1, "maximum": 65535 },
+      "path": { "type": "string", "default": "/ws" },
+      "token": { "type": "string" },
+      "ui": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "path": { "type": "string", "default": "/face" },
+          "defaultToUi": { "type": "boolean", "default": true }
+        },
+        "default": {}
+      },
+
+      "events": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "allow": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [
+              "message_received",
+              "llm_input",
+              "llm_output",
+              "before_tool_call",
+              "after_tool_call",
+              "message_sent",
+              "ui_interaction",
+              "action_play",
+              "thought"
+            ]
+          }
+        },
+        "default": {}
+      },
+
+      "fields": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ctx": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["sessionKey"]
+          },
+          "message": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["from", "timestamp"]
+          },
+          "llm_input": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["runId", "provider", "model"]
+          },
+          "llm_output": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["runId", "provider", "model", "usage"]
+          },
+          "tool": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": ["toolName", "durationMs", "error"]
+          },
+          "agent": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "gateway": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "session": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        },
+        "default": {}
+      },
+
+      "includeMessageContent": { "type": "boolean", "default": false },
+      "includeToolParams": { "type": "boolean", "default": false },
+
+      "weather": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "lat": { "type": "number", "default": 31.2304 },
+          "lon": { "type": "number", "default": 121.4737 },
+          "pollMs": { "type": "integer", "default": 900000, "minimum": 60000, "description": "Weather poll interval" }
+        },
+        "default": {}
+      },
+
+      "nomi": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "autoTouchReact": { "type": "boolean", "default": true },
+          "thought": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "listening": { "type": "string", "default": "I'm listening." },
+              "thinking": { "type": "string", "default": "Let me think..." }
+            },
+            "default": {}
+          }
+        },
+        "default": {}
+      }
+    }
+  },
+  "uiHints": {
+    "enabled": { "label": "Enabled" },
+    "bind": { "label": "Bind host", "help": "127.0.0.1 local-only; 0.0.0.0 to expose on LAN." },
+    "port": { "label": "WebSocket port" },
+    "path": { "label": "WebSocket path" },
+    "token": { "label": "Auth token", "sensitive": true, "help": "If set, clients must connect with ?token=..." },
+    "ui": { "label": "Built-in UI" },
+    "ui.enabled": { "label": "Enable built-in UI hosting" },
+    "ui.path": { "label": "UI path", "help": "The web page route served by the plugin, such as /face." },
+    "ui.defaultToUi": { "label": "Redirect / to UI", "help": "If enabled, visiting / will redirect to the UI path." },
+
+    "events": { "label": "Event allowlist" },
+    "fields": { "label": "Field allowlists" },
+
+    "includeMessageContent": {
+      "label": "Include message content",
+      "help": "Off by default. If enabled, message content may be emitted when fields.message includes 'content'."
+    },
+    "includeToolParams": {
+      "label": "Include tool params",
+      "help": "Off by default. If enabled, tool params/results may be emitted if allowed by fields/tool settings."
+    },
+
+    "weather": { "label": "Weather" },
+    "weather.enabled": { "label": "Enable weather polling" },
+    "weather.lat": { "label": "Latitude" },
+    "weather.lon": { "label": "Longitude" },
+    "weather.pollMs": { "label": "Weather poll interval (ms)" },
+
+    "nomi": { "label": "NOMI style expression" },
+    "nomi.autoTouchReact": { "label": "Auto react to touch/mouse down" },
+    "nomi.thought": { "label": "Default thought messages" },
+    "nomi.thought.listening": { "label": "Listening thought text" },
+    "nomi.thought.thinking": { "label": "Thinking thought text" }
+  }
+}
