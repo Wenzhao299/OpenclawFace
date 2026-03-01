@@ -248,6 +248,7 @@ export default function register(api: any) {
     port?: number;
     path?: string;
     token?: string;
+    debug?: boolean;
     includeMessageContent?: boolean;
     includeToolParams?: boolean;
     events?: { allow?: string[] };
@@ -298,6 +299,7 @@ export default function register(api: any) {
       const uiEnabled = uiCfg.enabled !== false;
       const uiPathCandidate = normalizeHttpPath(uiCfg.path, "/face");
       const uiPath = uiPathCandidate === "/" ? "/face" : uiPathCandidate;
+      const debugMode = pluginCfg.debug === true;
 
       const nomiCfg = pluginCfg.nomi ?? {};
       const autoTouchReact = nomiCfg.autoTouchReact !== false;
@@ -318,6 +320,7 @@ export default function register(api: any) {
               UI_INDEX_PLACEHOLDER,
               safeJson({
                 wsPath,
+                debug: debugMode,
               }),
             );
             res.statusCode = 200;
@@ -676,6 +679,7 @@ export default function register(api: any) {
         if (uiEnabled) {
           ctx.logger.info(`[openclaw-face] ui available at http://${bind}:${port}${uiPath}/`);
           ctx.logger.info(`[openclaw-face] ui directory: ${UI_DIR}`);
+          ctx.logger.info(`[openclaw-face] ui debug overlay: ${debugMode ? "on" : "off"}`);
         }
       });
 

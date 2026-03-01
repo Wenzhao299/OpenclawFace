@@ -5,6 +5,7 @@ import { createBehaviorPlanner } from './behaviorPlanner.js?v=20260301c';
 const qs = new URLSearchParams(location.search);
 const BOOT = globalThis.__OPENCLAW_FACE_CONFIG__ || {};
 const DEFAULT_WS_PATH = typeof BOOT.wsPath === 'string' && BOOT.wsPath.trim() ? BOOT.wsPath.trim() : '/ws';
+const DEBUG_MODE = BOOT.debug === true;
 const WS_URL = qs.get('ws') || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}${DEFAULT_WS_PATH}`;
 const WS_TOKEN = qs.get('token') || '';
 const WS_RECONNECT_MS = 1000;
@@ -65,7 +66,7 @@ function resolvePlannerHour() {
 
 const url = withToken(WS_URL, WS_TOKEN);
 const app = document.querySelector('#app');
-const shell = createShell(app, { wsUrl: url });
+const shell = createShell(app, { wsUrl: url, debug: DEBUG_MODE });
 
 const planner = createBehaviorPlanner();
 

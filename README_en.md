@@ -8,6 +8,7 @@ OpenclawFace is an all-in-one OpenClaw plugin that provides:
 2. A real-time face UI (`/face`) that reflects OpenClaw runtime state
 3. NOMI-style expression events (`action_play` / `thought`)
 4. Weather input (prefer `weather.city`, fallback `lat/lon`)
+5. Configurable debug visibility (`debug=true` shows status panels, hidden by default)
 
 ## Features
 
@@ -60,6 +61,7 @@ Merge the following snippet into `~/.openclaw/openclaw.json`:
           "port": 8787,
           "path": "/ws",
           "token": "replace-with-your-token",
+          "debug": false,
           "ui": {
             "enabled": true,
             "path": "/face",
@@ -84,6 +86,7 @@ Notes:
 
 1. `weather.city` takes priority over `weather.lat/lon`.
 2. If city resolution fails, plugin emits `weather_error` and falls back to coordinates.
+3. When `debug=false`, top/bottom runtime status blocks are hidden by default; set `debug=true` to show them.
 
 ## Usage
 
@@ -95,6 +98,9 @@ Notes:
 
 3. WS endpoint:
 `ws://<host>:8787/ws?token=<token>`
+
+4. Debug visibility:
+Set `config.debug` in `openclaw.json` (`true` to show status, `false` to hide).
 
 ## Protocol
 

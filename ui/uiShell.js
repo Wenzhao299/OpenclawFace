@@ -4,9 +4,10 @@ function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
 
-export function createShell(rootEl, { wsUrl }) {
+export function createShell(rootEl, { wsUrl, debug = false }) {
+  const debugMode = debug === true;
   rootEl.innerHTML = `
-    <div class="screen" id="screen" data-weather="clear">
+    <div class="screen ${debugMode ? 'debug-on' : 'debug-off'} mode-idle" id="screen" data-weather="clear">
       <div class="top">
         <div class="badge bad" id="ws-badge">WS DISCONNECTED</div>
         <div class="meta">
@@ -66,7 +67,10 @@ export function createShell(rootEl, { wsUrl }) {
 
   function setMode(mode) {
     els.mode.textContent = mode;
-    els.screen.className = `screen mode-${mode}`;
+    for (const name of Array.from(els.screen.classList)) {
+      if (name.startsWith('mode-')) els.screen.classList.remove(name);
+    }
+    els.screen.classList.add(`mode-${mode}`);
   }
 
   function setTool(name) {

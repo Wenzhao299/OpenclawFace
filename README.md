@@ -8,6 +8,7 @@ OpenclawFace 是一个一体化 OpenClaw 插件，提供：
 2. 根据 OpenClaw 状态实时展示表情 UI（`/face`）
 3. NOMI 风格表达事件（`action_play` / `thought`）
 4. 天气输入（优先 `weather.city`，备选 `lat/lon`）
+5. 可配置调试显示（`debug=true` 显示状态面板，默认隐藏）
 
 ## 功能特性
 
@@ -60,6 +61,7 @@ npm i
           "port": 8787,
           "path": "/ws",
           "token": "replace-with-your-token",
+          "debug": false,
           "ui": {
             "enabled": true,
             "path": "/face",
@@ -84,6 +86,7 @@ npm i
 
 1. `weather.city` 优先于 `weather.lat/lon`。
 2. 城市解析失败时会发出 `weather_error`，并回退到经纬度。
+3. `debug=false` 时 UI 顶部/底部状态信息默认隐藏；设为 `true` 可显示调试状态。
 
 ## 使用方式
 
@@ -95,6 +98,9 @@ npm i
 
 3. WS 连接地址：
 `ws://<host>:8787/ws?token=<token>`
+
+4. Debug 显示开关：
+在 `openclaw.json` 中设置 `config.debug`（`true` 显示状态，`false` 隐藏）。
 
 ## 协议结构
 

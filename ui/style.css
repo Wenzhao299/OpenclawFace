@@ -12,6 +12,10 @@ html,body{height:100%; margin:0; background:var(--bg); color:var(--fg); font-fam
 #app{height:100%;}
 
 .screen{height:100%; display:flex; flex-direction:column; padding:14px; box-sizing:border-box; touch-action:none;}
+.screen.debug-off .top,
+.screen.debug-off .bottom{display:none;}
+.screen.debug-off .thought-label{display:none;}
+.screen.debug-off{padding:6px;}
 .top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
 .badge{padding:6px 10px; border-radius:999px; font-size:12px; letter-spacing:0.5px; background:rgba(255,255,255,0.06);}
 .badge.ok{border:1px solid rgba(46,204,113,0.6); color:var(--ok);}

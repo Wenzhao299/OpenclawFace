@@ -12,6 +12,7 @@
       "port": { "type": "integer", "default": 8787, "minimum": 1, "maximum": 65535 },
       "path": { "type": "string", "default": "/ws" },
       "token": { "type": "string" },
+      "debug": { "type": "boolean", "default": false },
       "ui": {
         "type": "object",
         "additionalProperties": false,
@@ -135,6 +136,7 @@
     "port": { "label": "WebSocket port" },
     "path": { "label": "WebSocket path" },
     "token": { "label": "Auth token", "sensitive": true, "help": "If set, clients must connect with ?token=..." },
+    "debug": { "label": "Debug overlay", "help": "If enabled, show runtime status/debug blocks in the UI." },
     "ui": { "label": "Built-in UI" },
     "ui.enabled": { "label": "Enable built-in UI hosting" },
     "ui.path": { "label": "UI path", "help": "The web page route served by the plugin, such as /face." },
