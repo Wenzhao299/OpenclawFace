@@ -1,48 +1,48 @@
 # OpenclawFace
 
-语言 / Language: [中文](./README.md) | [English](./README_en.md)
+Language / 语言: [中文](./README.md) | [English](./README_en.md)
 
-OpenclawFace 是一个一体化 OpenClaw 插件，提供：
+OpenclawFace is an all-in-one OpenClaw plugin that provides:
 
-1. 双向 WebSocket 事件桥（`/ws`）
-2. 根据 OpenClaw 状态实时展示表情 UI（`/face`）
-3. NOMI 风格表达事件（`action_play` / `thought`）
-4. 天气输入（优先 `weather.city`，备选 `lat/lon`）
+1. A bidirectional WebSocket event bridge (`/ws`)
+2. A real-time face UI (`/face`) that reflects OpenClaw runtime state
+3. NOMI-style expression events (`action_play` / `thought`)
+4. Weather input (prefer `weather.city`, fallback `lat/lon`)
 
-## 功能特性
+## Features
 
-1. 获取 OpenClaw 实时状态。
-2. 角色根据 OpenClaw 运行事件（message/llm/tool 等）自动切换状态。
-3. 支持外部手动触发表情，便于调试和验收。
+1. Reads OpenClaw runtime state in real time.
+2. Character state switches automatically based on OpenClaw events (message/llm/tool, etc.).
+3. Supports external manual expression triggering for debugging and validation.
 
-## 环境要求
+## Requirements
 
 1. OpenClaw Gateway
-2. Node.js 18+ 与 npm
+2. Node.js 18+ and npm
 
-## 安装步骤
+## Installation
 
-1. 克隆仓库：
+1. Clone repository:
 
 ```bash
 cd ~/.openclaw/workspace/plugin
 git clone https://github.com/Wenzhao299/OpenclawFace.git
 ```
 
-2. 安装依赖：
+2. Install dependencies:
 
 ```bash
 cd ~/.openclaw/workspace/plugin/OpenclawFace
 npm i
 ```
 
-3. 将插件配置写入 `~/.openclaw/openclaw.json`（见下方最小配置）。
+3. Add plugin config into `~/.openclaw/openclaw.json` (see minimal config below).
 
-4. 重启 OpenClaw Gateway。
+4. Restart OpenClaw Gateway.
 
-## openclaw.json 最小配置
+## openclaw.json Minimal Config
 
-将以下片段合并到 `~/.openclaw/openclaw.json`：
+Merge the following snippet into `~/.openclaw/openclaw.json`:
 
 ```json
 {
@@ -80,25 +80,25 @@ npm i
 }
 ```
 
-说明：
+Notes:
 
-1. `weather.city` 优先于 `weather.lat/lon`。
-2. 城市解析失败时会发出 `weather_error`，并回退到经纬度。
+1. `weather.city` takes priority over `weather.lat/lon`.
+2. If city resolution fails, plugin emits `weather_error` and falls back to coordinates.
 
-## 使用方式
+## Usage
 
-1. 打开 UI：
+1. Open UI:
 `http://<host>:8787/face/`
 
-2. 如果启用了 `token`：
+2. If `token` is enabled:
 `http://<host>:8787/face/?token=<token>`
 
-3. WS 连接地址：
+3. WS endpoint:
 `ws://<host>:8787/ws?token=<token>`
 
-## 协议结构
+## Protocol
 
-消息通用结构：
+Common message envelope:
 
 ```json
 {
@@ -110,18 +110,18 @@ npm i
 }
 ```
 
-字段含义：
+Field meanings:
 
-1. `v`: 协议版本
-2. `type`: 事件分组（`gateway/session/message/agent/llm/tool/log/ui/expression`）
-3. `name`: 事件名
-4. `ts`: 时间戳（毫秒）
-5. `ctx`: 过滤后的上下文（可选）
-6. `data`: 事件数据
+1. `v`: protocol version
+2. `type`: event group (`gateway/session/message/agent/llm/tool/log/ui/expression`)
+3. `name`: event name
+4. `ts`: timestamp (milliseconds)
+5. `ctx`: filtered context (optional)
+6. `data`: event payload
 
-## WS 事件（Server -> Client）
+## WS Events (Server -> Client)
 
-始终会发出的事件：
+Always emitted events:
 
 1. `client_connected`
 2. `client_disconnected`
@@ -132,7 +132,7 @@ npm i
 7. `action_play`
 8. `thought`
 
-受 `events.allow` 控制的 OpenClaw Hook 事件：
+OpenClaw hook events controlled by `events.allow`:
 
 1. `message_received`, `message_sending`, `message_sent`
 2. `llm_input`, `llm_output`
@@ -140,24 +140,24 @@ npm i
 4. `before_agent_start`, `agent_end`, `subagent_spawning`, `subagent_spawned`, `subagent_ended`
 5. `session_start`, `session_end`, `gateway_start`, `gateway_stop`
 
-## 客户端可发送事件（Client -> Server）
+## Client Events (Client -> Server)
 
 1. `ui_interaction`
 2. `action_play`
 3. `thought`
 
-## 手动测试不同状态
+## Manual Testing Different States
 
-### A. 浏览器控制台快速测试
+### A. Fast test from browser console
 
-打开 `http://<host>:8787/face/?token=<token>`，执行：
+Open `http://<host>:8787/face/?token=<token>`, then run:
 
 ```js
 const ws = new WebSocket(`ws://${location.host}/ws?token=<token>`);
 const send = (name, data) => ws.send(JSON.stringify({ v: 1, type: 'ui', name, ts: Date.now(), data }));
 ```
 
-然后依次测试动作：
+Then run these test actions:
 
 ```js
 send('action_play', { action: 'tap_ack', durationMs: 1400, intensity: 0.9 }); // listening
@@ -170,38 +170,38 @@ send('action_play', { action: 'sleep', durationMs: 2200, intensity: 0.9 });
 send('thought', { text: 'Manual thought test', mood: 'thinking', ttlMs: 5000 });
 ```
 
-### B. 通过 OpenClaw 运行事件触发
+### B. Trigger via OpenClaw runtime events
 
-1. `listening`: `message_received` 或 pointer down/tap
+1. `listening`: `message_received` or pointer down/tap
 2. `thinking`: `llm_input`
 3. `tool`: `before_tool_call`
 4. `speaking`: `message_sent`
-5. `error`: `client_error` 或 `weather_error`
-6. `idle`: 默认状态或临时状态超时后恢复
+5. `error`: `client_error` or `weather_error`
+6. `idle`: default state or after temporary state timeout
 
-### C. 天气输入测试
+### C. Weather input test
 
-1. 在插件配置中设置 `"weather.city"`。
-2. 重启插件。
-3. 在 WS 数据流中确认 `weather_update` 负载。
+1. Set `"weather.city"` in plugin config.
+2. Restart plugin.
+3. Verify `weather_update` payload in WS stream.
 
-## 故障排查
+## Troubleshooting
 
-1. UI 显示不是最新：
-打开 `http://<host>:8787/face/` 后 `Ctrl+F5` 强刷，并检查启动日志是否打印：
+1. UI is not the latest:
+Hard refresh (`Ctrl+F5`) at `http://<host>:8787/face/`, then check startup log:
 `[openclaw-face] ui directory: .../OpenclawFace/ui`
 
-2. 插件未加载：
-确认 `plugins.entries` 的键名是 `OpenclawFace`（必须与 manifest 的 `id` 完全一致）。
+2. Plugin is not loaded:
+Ensure `plugins.entries` key is exactly `OpenclawFace` (must match manifest `id`).
 
-3. WS 无法连接：
-检查 `bind/port/path/token` 与网络防火墙配置。
+3. WS cannot connect:
+Check `bind/port/path/token` and firewall settings.
 
-## 安全建议
+## Security Recommendations
 
-1. 局域网暴露时建议启用 `token`。
-2. `includeMessageContent` 与 `includeToolParams` 默认关闭，建议保持默认。
+1. Enable `token` when exposed on LAN.
+2. Keep `includeMessageContent` and `includeToolParams` disabled unless required.
 
 ## License
 
-见 [LICENSE](./LICENSE)。
+See [LICENSE](./LICENSE).
