@@ -102,6 +102,7 @@
         "additionalProperties": false,
         "properties": {
           "enabled": { "type": "boolean", "default": true },
+          "city": { "type": "string", "description": "City name for weather lookup (preferred over lat/lon when set)." },
           "lat": { "type": "number", "default": 31.2304 },
           "lon": { "type": "number", "default": 121.4737 },
           "pollMs": { "type": "integer", "default": 900000, "minimum": 60000, "description": "Weather poll interval" }
@@ -153,6 +154,7 @@
 
     "weather": { "label": "Weather" },
     "weather.enabled": { "label": "Enable weather polling" },
+    "weather.city": { "label": "City", "help": "Optional city name. If set, plugin resolves city to coordinates and uses it first." },
     "weather.lat": { "label": "Latitude" },
     "weather.lon": { "label": "Longitude" },
     "weather.pollMs": { "label": "Weather poll interval (ms)" },

@@ -221,6 +221,25 @@ function normalizeThought(data: Record<string, unknown>, clientId: string) {
   return payload;
 }
 
+function httpsGetJson(url: string) {
+  return new Promise<any>((resolve, reject) => {
+    const req = https.get(url, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (c) => chunks.push(Buffer.from(c)));
+      res.on("end", () => {
+        try {
+          const text = Buffer.concat(chunks).toString("utf8");
+          resolve(JSON.parse(text));
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 // OpenClaw loads TS via jiti. Keep dependencies pure JS/TS.
 export default function register(api: any) {
   const pluginCfg = (api.pluginConfig ?? {}) as {
@@ -244,6 +263,7 @@ export default function register(api: any) {
     };
     weather?: {
       enabled?: boolean;
+      city?: string;
       lat?: number;
       lon?: number;
       pollMs?: number;
@@ -332,7 +352,8 @@ export default function register(api: any) {
             const buf = await fs.promises.readFile(abs);
             res.statusCode = 200;
             res.setHeader("content-type", contentTypeFor(abs));
-            res.setHeader("cache-control", "public, max-age=600");
+            // Keep UI assets fresh during frequent iteration.
+            res.setHeader("cache-control", "no-cache, no-store, must-revalidate");
             res.end(buf);
           } catch {
             respond(404, "not found\n");
@@ -419,24 +440,29 @@ export default function register(api: any) {
         return allowEvents.has(name);
       }
 
-      async function fetchWeather(lat: number, lon: number) {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,cloud_cover&timezone=Asia%2FShanghai`;
-        return await new Promise<any>((resolve, reject) => {
-          const req = https.get(url, (res) => {
-            const chunks: Buffer[] = [];
-            res.on("data", (c) => chunks.push(Buffer.from(c)));
-            res.on("end", () => {
-              try {
-                const text = Buffer.concat(chunks).toString("utf8");
-                resolve(JSON.parse(text));
-              } catch (e) {
-                reject(e);
-              }
-            });
-          });
-          req.on("error", reject);
-          req.end();
-        });
+      async function fetchWeather(lat: number, lon: number, timezone = "auto") {
+        const tz = encodeURIComponent(timezone || "auto");
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,cloud_cover&timezone=${tz}`;
+        return await httpsGetJson(url);
+      }
+
+      async function resolveCityWeather(city: string) {
+        const q = encodeURIComponent(city);
+        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1&language=en&format=json`;
+        const json = await httpsGetJson(url);
+        const first = Array.isArray(json?.results) ? json.results[0] : undefined;
+        const lat = toFiniteNumber(first?.latitude);
+        const lon = toFiniteNumber(first?.longitude);
+        if (lat === undefined || lon === undefined) {
+          throw new Error(`city_not_found:${city}`);
+        }
+        return {
+          lat,
+          lon,
+          city: toBoundedString(first?.name, 64) ?? city,
+          country: toBoundedString(first?.country, 64),
+          timezone: toBoundedString(first?.timezone, 64),
+        };
       }
 
       function mapWeather(code: number, cloudCover?: number): WeatherKind {
@@ -649,20 +675,67 @@ export default function register(api: any) {
         ctx.logger.info(`[openclaw-face] ws listening on ws://${bind}:${port}${wsPath}`);
         if (uiEnabled) {
           ctx.logger.info(`[openclaw-face] ui available at http://${bind}:${port}${uiPath}/`);
+          ctx.logger.info(`[openclaw-face] ui directory: ${UI_DIR}`);
         }
       });
 
       // ---- Weather polling (panel-friendly env event)
       const weatherCfg = pluginCfg.weather ?? {};
       const weatherEnabled = weatherCfg.enabled !== false;
+      const weatherCity = typeof weatherCfg.city === "string" ? weatherCfg.city.trim() : "";
       const weatherLat = weatherCfg.lat ?? 31.2304;
       const weatherLon = weatherCfg.lon ?? 121.4737;
       const weatherPollMs = Math.max(60000, weatherCfg.pollMs ?? 900000);
+      const cityResolveRetryMs = 10 * 60 * 1000;
+      let resolvedCity:
+        | {
+            lat: number;
+            lon: number;
+            city: string;
+            country?: string;
+            timezone?: string;
+          }
+        | undefined;
+      let lastCityResolveAt = 0;
       let weatherTimer: NodeJS.Timeout | undefined;
 
       async function tickWeather() {
         try {
-          const json = await fetchWeather(weatherLat, weatherLon);
+          let targetLat = weatherLat;
+          let targetLon = weatherLon;
+          let targetCity: string | undefined;
+          let targetCountry: string | undefined;
+          let targetTimezone = "auto";
+          let source: "city" | "coords" = "coords";
+
+          if (weatherCity) {
+            targetCity = weatherCity;
+            const shouldResolve = !resolvedCity || now() - lastCityResolveAt >= cityResolveRetryMs;
+            if (shouldResolve) {
+              lastCityResolveAt = now();
+              try {
+                resolvedCity = await resolveCityWeather(weatherCity);
+              } catch (e) {
+                resolvedCity = undefined;
+                emit("gateway", "weather_error", {
+                  stage: "city_resolve",
+                  city: weatherCity,
+                  error: e instanceof Error ? e.message : String(e),
+                });
+              }
+            }
+
+            if (resolvedCity) {
+              targetLat = resolvedCity.lat;
+              targetLon = resolvedCity.lon;
+              targetCity = resolvedCity.city;
+              targetCountry = resolvedCity.country;
+              targetTimezone = resolvedCity.timezone || "auto";
+              source = "city";
+            }
+          }
+
+          const json = await fetchWeather(targetLat, targetLon, targetTimezone);
           const cur = json?.current;
           if (!cur) return;
           const kind = mapWeather(cur.weather_code, cur.cloud_cover);
@@ -674,6 +747,11 @@ export default function register(api: any) {
             // Open-Meteo uses ISO timestamps
             time: cur.time,
             tz: json?.timezone,
+            source,
+            lat: targetLat,
+            lon: targetLon,
+            city: targetCity,
+            country: targetCountry,
           };
           lastWeatherRaw = payload;
           emit("gateway", "weather_update", payload);

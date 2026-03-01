@@ -177,10 +177,14 @@ function actionTrackFromName(actionName) {
       return 'head';
     case 'wink':
     case 'curious':
+    case 'sleepy':
     case 'tool_focus':
       return 'eyes';
     case 'speak':
       return 'mouth';
+    case 'angry':
+    case 'sad':
+    case 'sleep':
     case 'wave':
     case 'greet':
     case 'happy':
@@ -326,6 +330,30 @@ function pickIdleExpressionProfile(relation, ctx, rand) {
       intensity: (baseIntensity + 0.04) * tempScale,
       mood: 'warm',
       state: 'social_idle',
+    },
+    {
+      name: 'sleep',
+      weight: isNight ? 1.8 : 0.15,
+      durationMs: isNight ? 1300 : 980,
+      intensity: (baseIntensity - 0.12) * weatherScale * tempScale,
+      mood: 'calm',
+      state: 'resting_idle',
+    },
+    {
+      name: 'sad',
+      weight: isCalmWeather && relation.bond < 0.45 ? 0.9 : 0.18,
+      durationMs: 900,
+      intensity: (baseIntensity - 0.08) * weatherScale * tempScale,
+      mood: 'calm',
+      state: 'reflecting_idle',
+    },
+    {
+      name: 'angry',
+      weight: relation.trust < 0.22 && !isNight ? 0.5 : 0.08,
+      durationMs: 760,
+      intensity: (baseIntensity + 0.03) * tempScale,
+      mood: 'alert',
+      state: 'alert_idle',
     },
   ];
 
@@ -558,6 +586,14 @@ export function createBehaviorPlanner(opts = {}) {
       lastExternalExpressionAt = ts;
     } else if (intent === 'error') {
       steps.push(sequenceStep(0, 'mode', { mode: 'error' }));
+      steps.push(sequenceStep(0, 'action', {
+        name: 'angry',
+        track: 'core',
+        durationMs: 920,
+        intensity: 0.82,
+        blendInMs: 90,
+        blendOutMs: 220,
+      }));
       steps.push(sequenceStep(0, 'thought', {
         text: 'Something went wrong. Recovering.',
         mood: 'error',

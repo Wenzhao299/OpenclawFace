@@ -1,6 +1,6 @@
-import { createFaceEngine } from './faceEngine.js';
-import { createShell } from './uiShell.js';
-import { createBehaviorPlanner } from './behaviorPlanner.js';
+import { createFaceEngine } from './faceEngine.js?v=20260301c';
+import { createShell } from './uiShell.js?v=20260301c';
+import { createBehaviorPlanner } from './behaviorPlanner.js?v=20260301c';
 
 const qs = new URLSearchParams(location.search);
 const BOOT = globalThis.__OPENCLAW_FACE_CONFIG__ || {};
@@ -78,6 +78,7 @@ let ws = null;
 let reconnectTimer = null;
 let speakingTimer = null;
 let toolIdleTimer = null;
+let modeTimer = null;
 let thoughtTimer = null;
 let lastMoveSendAt = 0;
 let interactionSeq = 0;
@@ -217,6 +218,17 @@ function toolBumpToIdle(ms = 1400) {
   }, ms);
 }
 
+function bumpMode(mode, ms = 1000) {
+  clearTimeout(modeTimer);
+  const changed = setMode(mode, { silent: true });
+  modeTimer = setTimeout(() => {
+    if (state.mode !== mode) return;
+    if (state.toolName) setMode('tool');
+    else setMode('idle');
+  }, clamp(ms + 240, 500, 4200));
+  return changed;
+}
+
 function applyAttention(x, y) {
   if (!faceReady || !face?.setAttention) return;
   face.setAttention(clamp(x, 0, 1), clamp(y, 0, 1));
@@ -255,6 +267,19 @@ function playAction(data = {}, opts = {}) {
       setTimeout(() => {
         if (state.mode === 'listening') setMode('idle');
       }, Math.min(durationMs, 1600));
+      break;
+    case 'happy':
+      dirty = bumpMode('happy', durationMs) || dirty;
+      break;
+    case 'angry':
+      dirty = bumpMode('angry', durationMs) || dirty;
+      break;
+    case 'sad':
+      dirty = bumpMode('sad', durationMs) || dirty;
+      break;
+    case 'sleep':
+    case 'sleepy':
+      dirty = bumpMode('sleep', durationMs) || dirty;
       break;
     default:
       break;
